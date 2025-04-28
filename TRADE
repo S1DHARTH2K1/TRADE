@@ -1,0 +1,164 @@
+trade.js
+--------
+import React, { useState } from 'react';
+const StockPriceTracker = () => {
+  const [symbol, setSymbol] = useState('');
+  const [stockData, setStockData] = useState(null);
+  const [error, setError] = useState(null);
+
+  const API_KEY = 'PGEABTSZYEEB0BI1';
+
+  const handleInputChange = (e) => {
+    setSymbol(e.target.value);
+  };
+
+  const fetchStockData = async () => {
+    if (!symbol) {
+      alert('Please enter a stock symbol');
+      return;
+    }
+
+    setError(null);
+    setStockData(null);
+
+    const url = `https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=${symbol}&interval=5min&apikey=${API_KEY}`;
+
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data['Time Series (5min)']) {
+        const timeSeries = data['Time Series (5min)'];
+        const latestTime = Object.keys(timeSeries)[0];
+        const latestData = timeSeries[latestTime];
+
+        const stockInfo = {
+          symbol: symbol,
+          price: latestData['4. close'],
+          high: latestData['2. high'],
+          low: latestData['3. low'],
+          trend: latestData['4. close'] > timeSeries[Object.keys(timeSeries)[1]]['4. close'] ? 'Up' : 'Down',
+        };
+
+        setStockData(stockInfo);
+      } else {
+        setError('Invalid stock symbol or no data available');
+      }
+    } catch (err) {
+      setError('Error fetching data');
+    }
+  };
+
+  return (
+    <div className="stock-tracker-container">
+      <h1 className="title">Stock Price Tracker</h1>
+
+      <div className="input-section">
+        <input
+          type="text"
+          placeholder="Enter stock symbol"
+          value={symbol}
+          onChange={handleInputChange}
+          className="input-box"
+        />
+        <button className="search-button" onClick={fetchStockData}>Search</button>
+      </div>
+
+      {error && <div className="error-message">{error}</div>}
+
+      {stockData && (
+        <div className="stock-details">
+          <h3>Stock Details for: {stockData.symbol}</h3>
+          <p><strong>Current Price:</strong> ${stockData.price}</p>
+          <p><strong>High:</strong> ${stockData.high}</p>
+          <p><strong>Low:</strong> ${stockData.low}</p>
+          <p><strong>Trend:</strong> {stockData.trend}</p>
+        </div>
+      )}
+
+      {/* CSS Styles */}
+      <style>{`
+        .stock-tracker-container {
+          max-width: 600px;
+          margin: 30px auto;
+          padding: 25px;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          background-color: #f9f9f9;
+          text-align: center;
+        }
+
+        .title {
+          margin-bottom: 20px;
+          color: #333;
+        }
+
+        .input-section {
+          display: flex;
+          justify-content: center;
+          margin-bottom: 20px;
+          gap: 10px;
+        }
+
+        .input-box {
+          padding: 10px;
+          width: 60%;
+          border: 1px solid #ccc;
+          border-radius: 5px;
+          font-size: 16px;
+        }
+
+        .search-button {
+          padding: 10px 20px;
+          background-color: #4CAF50;
+          color: white;
+          border: none;
+          border-radius: 5px;
+          cursor: pointer;
+          font-size: 16px;
+        }
+
+        .search-button:hover {
+          background-color: #45a049;
+        }
+
+        .error-message {
+          color: red;
+          margin-top: 10px;
+        }
+
+        .stock-details {
+          margin-top: 20px;
+          text-align: left;
+          background: white;
+          padding: 20px;
+          border: 1px solid #ccc;
+          border-radius: 8px;
+        }
+
+        .stock-details p {
+          margin: 8px 0;
+        }
+      `}</style>
+    </div>
+  );
+};
+
+export default StockPriceTracker;
+--------------------------------------
+
+index.js
+--------
+import React from "react";
+import StockPriceTracker from "./trade/trade";
+import {createRoot} from 'react-dom/client'
+ const Ap = ()=>{
+  return(
+    <div>
+      <StockPriceTracker />
+    </div>
+  )
+ }
+
+ const root =createRoot(document.getElementById('root'));
+ root.render(<Ap/>)
